@@ -14,16 +14,17 @@ import (
 
 // Device
 type Device struct {
+	NAME        string // host
+	HOSTNAME    string // hostname
+	IP          string // ip address
 	MAC         string `bson:"mac"`
 	OUI         string `bson:"oui"`
-	IP          string // ip address
-	HOST        string // host
-	HOSTNAME    string // hostname
 	SWITCH      string `bson:"last_uplink_name"`
 	SWITCHPORT  string // switch port
 	VLANNETWORK string `bson:"last_connection_network_name"`
-	FirstSeen   int64  `bson:"assoc_time"`
-	SiteId      string `bson:"site_id"`
+	FIRSTSEEN   int64  `bson:"assoc_time"`
+	LASTSEEN    int64  // last stat timestamp
+	SITEID      string `bson:"site_id"`
 }
 
 // Stat
@@ -103,9 +104,27 @@ func main() {
 	// wait till all queries done
 	wg.Wait()
 
+	// parste last stats data into device record
+	var org int64
+	for _, d := range devices {
+		org = d.LASTSEEN
+		d.LASTSEEN = 0
+		for _, s := range stats {
+			if d.LASTSEEN < s.TIME {
+				d.LASTSEEN = s.TIME
+				d.NAME = s.NAME
+				d.HOSTNAME = s.HOSTNAME
+			}
+		}
+		if org > d.LASTSEEN {
+			d.LASTSEEN = org
+		}
+
+	}
+
 	// sort devices by mac
 	sort.Slice(devices, func(i, j int) bool {
-		return devices[i].MAC < devices[j].MAC
+		return devices[i].NAME < devices[j].NAME
 	})
 
 	// write as csv
