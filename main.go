@@ -57,7 +57,7 @@ func main() {
 	var devices []Device
 	var stats []Stat
 
-	// get all devices
+	// get all device records
 	wg.Add(1)
 	go func() {
 
@@ -79,7 +79,7 @@ func main() {
 		}
 	}()
 
-	// get all stats
+	// fetch all stats snipets
 	wg.Add(1)
 	go func() {
 
@@ -104,16 +104,18 @@ func main() {
 	// wait till all queries done
 	wg.Wait()
 
-	// parste last stats data into device record
+	// parste all stats, add missing data into device records
 	var org int64
 	for _, d := range devices {
 		org = d.LASTSEEN
 		d.LASTSEEN = 0
 		for _, s := range stats {
-			if d.LASTSEEN < s.TIME {
-				d.LASTSEEN = s.TIME
-				d.NAME = s.NAME
-				d.HOSTNAME = s.HOSTNAME
+			if d.MAC == s.MAC {
+				if d.LASTSEEN < s.TIME {
+					d.LASTSEEN = s.TIME
+					d.NAME = s.NAME
+					d.HOSTNAME = s.HOSTNAME
+				}
 			}
 		}
 		if org > d.LASTSEEN {
@@ -122,7 +124,7 @@ func main() {
 
 	}
 
-	// sort devices by mac
+	// sort devices by name
 	sort.Slice(devices, func(i, j int) bool {
 		return devices[i].NAME < devices[j].NAME
 	})
