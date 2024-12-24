@@ -45,25 +45,27 @@ type Stat struct {
 
 // Setup defaults and Sanitize Config
 func (c *Config) Setup() (*Config, error) {
-	if c.MongoDB == "" {
+	switch c.MongoDB {
+	case "":
 		c.MongoDB = "mongodb://127.0.01:27117"
-	}
-	if len(strings.Split(MongoDB, ":")) != 3 {
-		return errors.New("invalid mongodb uri: %s", c.MongoDB), c
+	default:
+		if len(strings.Split(MongoDB, ":")) != 3 {
+			return errors.New("invalid mongodb uri: %s", c.MongoDB), c
+		}
 	}
 	switch c.Format {
-	case "":
-		c.Format = "csv"
 	case "csv":
 	case "json":
+	case "":
+		c.Format = "csv"
 	default:
 		return errors.New("invalid export format: %s, need: [csv|json]", c.Format), c
 	}
 	switch c.Scope {
-	case "":
-		c.Scope = "client"
 	case "client":
 	case "infra":
+	case "":
+		c.Scope = "client"
 	default:
 		return errors.New("invalid export scope: %s, need: [client|infra]", c.Scope), c
 	}
