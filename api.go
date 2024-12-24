@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/gocarina/gocsv"
@@ -11,6 +12,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+// Config
+type Config struct {
+	MongoDB string // mongodb uri, default: mongodb://127.0.0.1:27117
+	Format  string // export format, default: csv [csv|json]
+	Scope   string // export scope, default: client [client|infra]
+}
 
 // Device
 type Device struct {
@@ -24,7 +32,6 @@ type Device struct {
 	VLANNETWORK string `bson:"last_connection_network_name"`
 	FIRSTSEEN   int64  `bson:"assoc_time"`
 	LASTSEEN    int64  // last stat timestamp
-	SITEID      string `bson:"site_id"`
 }
 
 // Stat
@@ -36,13 +43,44 @@ type Stat struct {
 	TIME     int64  `bson:"time"`
 }
 
-// main
-func main() {
+// Setup defaults and Sanitize Config
+func (c *Config) Setup() (*Config, error) {
+	if c.MongoDB == "" {
+		c.MongoDB = "mongodb://127.0.01:27117"
+	}
+	if len(strings.Split(MongoDB, ":")) != 3 {
+		return errors.New("invalid mongodb uri: %s", c.MongoDB), c
+	}
+	switch c.Format {
+	case "":
+		c.Format = "csv"
+	case "csv":
+	case "json":
+	default:
+		return errors.New("invalid export format: %s, need: [csv|json]", c.Format), c
+	}
+	switch c.Scope {
+	case "":
+		c.Scope = "client"
+	case "client":
+	case "infra":
+	default:
+		return errors.New("invalid export scope: %s, need: [client|infra]", c.Scope), c
+	}
+}
 
-	// setup connection
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://127.0.0.1:27117"))
+// Export Data
+func (c *Config) Export() (string, error) {
+
+	// setup default and sanitize input
+	if c, err := c.Setup(); err != nil {
+		return "", err
+	}
+
+	// setup unifi mongodb connection
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(c.MongoDB))
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	// prep global clean exit
@@ -132,9 +170,9 @@ func main() {
 	// write as csv
 	csv, err := gocsv.MarshalString(&devices)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	// out
-	fmt.Println(csv)
+	// success
+	return csv, nil
 }
