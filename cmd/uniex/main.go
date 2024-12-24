@@ -17,11 +17,11 @@ func main() {
 	c := &uniex.Config{
 		MongoDB: os.Getenv("UNIEX_MONGODB"), // default: mongodb://localhost:27117
 		Format:  os.Getenv("UNIEX_FORMAT"),  // default: csv [csv, json]
-		Select:  os.Getenv("UNIEX_SCOPE"),   // default: client [client, infra]
+		Scope:   os.Getenv("UNIEX_SCOPE"),   // default: client [client, infra]
 	}
 
 	// perform Backup of all Appliances xml configuration
-	out, err = c.Export()
+	out, err := c.Export()
 	if err != nil {
 		fmt.Printf(_app+"[ERROR][EXIT] %s\n", err)
 		os.Exit(1)

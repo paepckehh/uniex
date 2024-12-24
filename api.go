@@ -1,10 +1,12 @@
-package main
+package uniex
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net"
+	"net/url"
 	"sort"
-	"strings"
 	"sync"
 
 	"github.com/gocarina/gocsv"
@@ -45,44 +47,62 @@ type Stat struct {
 
 // Setup defaults and Sanitize Config
 func (c *Config) Setup() (*Config, error) {
+
+	// validate db connection
 	switch c.MongoDB {
 	case "":
-		c.MongoDB = "mongodb://127.0.01:27117"
-	default:
-		if len(strings.Split(MongoDB, ":")) != 3 {
-			return errors.New("invalid mongodb uri: %s", c.MongoDB), c
-		}
+		c.MongoDB = "mongodb://127.0.0.1:27117"
 	}
+	uri, err := url.Parse(c.MongoDB)
+	if err != nil {
+		return c, errors.New("invalid mongodb uri: " + c.MongoDB + " error: " + err.Error())
+	}
+	if uri.Scheme != "mongodb" {
+		return c, errors.New("invalid mongodb uri scheme, need mongodb, got: " + uri.Scheme + " error: " + err.Error())
+	}
+	if _, err := net.LookupIP(uri.Hostname()); err != nil {
+		return c, errors.New("unable to dns lookup mongodb hostname: " + uri.Hostname() + " error: " + err.Error())
+	}
+
+	// validate output format
 	switch c.Format {
 	case "csv":
 	case "json":
 	case "":
 		c.Format = "csv"
 	default:
-		return errors.New("invalid export format: %s, need: [csv|json]", c.Format), c
+		return c, errors.New("invalid export format, need: [csv|json], got: " + c.Format)
 	}
+
+	// validate search scope
 	switch c.Scope {
 	case "client":
 	case "infra":
 	case "":
 		c.Scope = "client"
 	default:
-		return errors.New("invalid export scope: %s, need: [client|infra]", c.Scope), c
+		return c, errors.New("invalid export scope, need: [client|infra], got: " + c.Scope)
 	}
+
+	// success
+	return c, nil
 }
 
 // Export Data
 func (c *Config) Export() (string, error) {
 
+	// init
+	var err error
+
 	// setup default and sanitize input
-	if c, err := c.Setup(); err != nil {
+	if c, err = c.Setup(); err != nil {
 		return "", err
 	}
 
 	// setup unifi mongodb connection
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(c.MongoDB))
 	if err != nil {
-		return "", err
+		return "", errors.New("unable to connect to mongodb: " + c.MongoDB + ", " + err.Error())
 	}
 
 	// prep global clean exit
@@ -169,12 +189,22 @@ func (c *Config) Export() (string, error) {
 		return devices[i].NAME < devices[j].NAME
 	})
 
-	// write as csv
-	csv, err := gocsv.MarshalString(&devices)
-	if err != nil {
-		return "", err
+	// output
+	var out string
+	switch c.Format {
+	case "csv":
+		out, err = gocsv.MarshalString(&devices)
+		if err != nil {
+			return "", err
+		}
+	case "json":
+		j, err := json.Marshal(&devices)
+		if err != nil {
+			return "", err
+		}
+		out = string(j)
+	default:
+		panic("internal error, unsupported output format") // unreachable
 	}
-
-	// success
-	return csv, nil
+	return out, nil
 }
