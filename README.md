@@ -25,10 +25,15 @@
 go run paepcke.de/uniex/cmd/uniex@main
 ```
 
-# ⚡️PRETTY PRINT OUTPUT VIA [BAT](https://github.com/sharkdp/bat) / [JQ](https://github.com/jqlang/jq) 
+# ⚡️PRETTY PRINT CSV OUTPUT VIA [BAT](https://github.com/sharkdp/bat)
 
 ```
 go run paepcke.de/uniex/cmd/uniex@main | bat -l csv
+```
+
+# ⚡️PRETTY PRINT JSON OUTPUT VIA [JQ](https://github.com/jqlang/jq) 
+
+```
 UNIEX_FORMAT=json go run paepcke.de/uniex/cmd/uniex@main | jq
 ```
 
