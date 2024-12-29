@@ -9,7 +9,7 @@ import (
 )
 
 // global
-const SemVer = "v0.1.0"
+const SemVer = "v0.1.1"
 
 // Config
 type Config struct {
@@ -41,6 +41,8 @@ type Stat struct {
 	MAC           string `bson:"mac"`
 	HOSTNAME      string `bson:"hostname"`
 	IP            string `bson:"ip"`
+	SWITCHMAC     string `bson:"sw_mac"`
+	SWITCHPORT    string `bson:"sw_port"`
 	LASTSEEN_UNIX int64  `bson:"time"`
 }
 

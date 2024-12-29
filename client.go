@@ -82,6 +82,9 @@ func (c *Config) clientInventory(db *mongo.Client) ([]byte, error) {
 					d.LASTSEEN_UNIX = s.LASTSEEN_UNIX
 					d.HOSTNAME = s.HOSTNAME
 					d.IP = s.IP
+					if d.SWITCHMAC == s.SWITCHMAC {
+						d.SWITCHPORT = s.SWITCHPORT
+					}
 				}
 			}
 		}
