@@ -13,15 +13,23 @@
 - Exports UNIFI Controller Inventory Database (mongoDB) to [csv|json]
 - Adds missing attributes (latest used hostname, latest used ip, latest seen, ...) via parsing all stats snippets
 - Converts Timestamps (eg. unix nano time) into RFC3339 (parseable by excel, human readable) format
-- Fast, even for large corp enviroments (in-memory, parallel processing)
+- Fast, even for large corp inventory (in-memory, parallel processing)
  
 # SCREENSHOT CLI
 
 ![UNIEX SAMPLE SCREENSHOT](https://github.com/paepckehh/uniex/blob/main/resources/screenshot01.png "SCREEN")
 
 # ⚡️QUICK START
+
 ```
 go run paepcke.de/uniex/cmd/uniex@main
+```
+
+# ⚡️PRETTY PRINT OUTPUT VIA [BAT](https://github.com/sharkdp/bat) / [JQ](https://github.com/jqlang/jq) 
+
+```
+go run paepcke.de/uniex/cmd/uniex@main | bat -l csv
+UNIEX_FORMAT=json go run paepcke.de/uniex/cmd/uniex@main | jq
 ```
 
 # ⚡️HOW TO INSTALL
@@ -37,7 +45,7 @@ go install paepcke.de/uniex/cmd/uniex@main
 # SUPPORTED OPTIONS 
 
 ```
-# Optional (env variables)
+# Optional (via env variables)
 - UNIEX_MONGODB   - mongodb uri, default: mongodb://127.0.0.1:27117
 - UNIEX_FORMAT    - export format, default: csv [csv|json]
 ```
