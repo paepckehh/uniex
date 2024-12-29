@@ -1,0 +1,46 @@
+builds:
+  -
+    id: "uniex"
+    binary: uniex
+    main: ./cmd/uniex/main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - freebsd
+      - darwin
+      - netbsd
+      - openbsd
+      - windows
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 7
+archives:
+  -
+    id: uniex-binaries
+    name_template: "uniex-{{ .Os }}_{{ .Arch }}_{{ .Version }}"
+    files:
+      - LICENSE
+      - README.md
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+nfpms:
+  -
+    file_name_template: "uniex_package_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    vendor: Michael Paepcke
+    homepage: https://paepcke.de/uniex
+    maintainer: Michael Paepcke <git@paepcke.de>
+    description: uniex
+    license: BSD 3-Clause
+    formats:
+      - deb
+      - rpm

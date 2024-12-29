@@ -38,7 +38,6 @@ func (c *Config) setup() (*Config, error) {
 	// validate search scope
 	switch c.Scope {
 	case "client":
-	case "infra":
 	case "":
 		c.Scope = "client"
 	default:
