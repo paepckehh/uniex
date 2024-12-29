@@ -4,10 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net"
-	"net/url"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/gocarina/gocsv"
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,77 +14,40 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// global
+const SemVer = "v0.0.6"
+
 // Config
 type Config struct {
-	MongoDB string // mongodb uri, default: mongodb://127.0.0.1:27117
-	Format  string // export format, default: csv [csv|json]
-	Scope   string // export scope, default: client [client|infra]
+	MongoDB string // [UNIEX_MONGODB] mongodb uri, default: mongodb://127.0.0.1:27117
+	Format  string // [UNIEX_FORMAT]  export format, default: csv [csv|json]
+	Scope   string // [UNIEX_SCOPE]   export scope, default: client [client|infra]
 }
 
 // Device
 type Device struct {
-	NAME        string // host
-	HOSTNAME    string // hostname
-	IP          string // ip address
-	MAC         string `bson:"mac"`
-	OUI         string `bson:"oui"`
-	SWITCH      string `bson:"last_uplink_name"`
-	SWITCHPORT  string // switch port
-	VLANNETWORK string `bson:"last_connection_network_name"`
-	FIRSTSEEN   int64  `bson:"assoc_time"`
-	LASTSEEN    int64  // last stat timestamp
+	NAME           string `bson:"name"`
+	NOTE           string `bson:"note"`
+	HOSTNAME       string // hostname (from stats)
+	IP             string // ip address (from stats)
+	MAC            string `bson:"mac"`
+	OUI            string `bson:"oui"`
+	SWITCHNAME     string `bson:"last_uplink_name"`
+	SWITCHMAC      string `bson:"last_uplink_mac"`
+	SWITCHPORT     string // switch port (from stats)
+	VLANNETWORK    string `bson:"last_connection_network_name"`
+	FIRSTSEEN      string // rfc3339 timestamp (calculated)
+	LASTSEEN       string // rfc3339 timestamp (calculated)
+	FIRSTSEEN_UNIX int64  `bson:"first_seen"`
+	LASTSEEN_UNIX  int64  `bson:"last_seen"`
 }
 
 // Stat
 type Stat struct {
-	MAC      string `bson:"mac"`
-	NAME     string `bson:"name"`
-	HOSTNAME string `bson:"hostname"`
-	IP       string `bson:"ip"`
-	TIME     int64  `bson:"time"`
-}
-
-// Setup defaults and Sanitize Config
-func (c *Config) Setup() (*Config, error) {
-
-	// validate db connection
-	switch c.MongoDB {
-	case "":
-		c.MongoDB = "mongodb://127.0.0.1:27117"
-	}
-	uri, err := url.Parse(c.MongoDB)
-	if err != nil {
-		return c, errors.New("invalid mongodb uri: " + c.MongoDB + " error: " + err.Error())
-	}
-	if uri.Scheme != "mongodb" {
-		return c, errors.New("invalid mongodb uri scheme, need mongodb, got: " + uri.Scheme + " error: " + err.Error())
-	}
-	if _, err := net.LookupIP(uri.Hostname()); err != nil {
-		return c, errors.New("unable to dns lookup mongodb hostname: " + uri.Hostname() + " error: " + err.Error())
-	}
-
-	// validate output format
-	switch c.Format {
-	case "csv":
-	case "json":
-	case "":
-		c.Format = "csv"
-	default:
-		return c, errors.New("invalid export format, need: [csv|json], got: " + c.Format)
-	}
-
-	// validate search scope
-	switch c.Scope {
-	case "client":
-	case "infra":
-	case "":
-		c.Scope = "client"
-	default:
-		return c, errors.New("invalid export scope, need: [client|infra], got: " + c.Scope)
-	}
-
-	// success
-	return c, nil
+	MAC           string `bson:"mac"`
+	HOSTNAME      string `bson:"hostname"`
+	IP            string `bson:"ip"`
+	LASTSEEN_UNIX int64  `bson:"time"`
 }
 
 // Export Data
@@ -95,7 +57,7 @@ func (c *Config) Export() (string, error) {
 	var err error
 
 	// setup default and sanitize input
-	if c, err = c.Setup(); err != nil {
+	if c, err = c.setup(); err != nil {
 		return "", err
 	}
 
@@ -165,23 +127,28 @@ func (c *Config) Export() (string, error) {
 	wg.Wait()
 
 	// parste all stats, add missing data into device records
-	var org int64
-	for _, d := range devices {
-		org = d.LASTSEEN
-		d.LASTSEEN = 0
+	var ts int64
+	for i, d := range devices {
+		d.LASTSEEN_UNIX = d.LASTSEEN_UNIX * 1000 // stats stamps have higher time resolution
+		ts = d.LASTSEEN_UNIX
+		d.LASTSEEN_UNIX = 0
 		for _, s := range stats {
+			// find latest matching stats record, get data
 			if d.MAC == s.MAC {
-				if d.LASTSEEN < s.TIME {
-					d.LASTSEEN = s.TIME
-					d.NAME = s.NAME
+				if d.LASTSEEN_UNIX < s.LASTSEEN_UNIX {
+					d.LASTSEEN_UNIX = s.LASTSEEN_UNIX
 					d.HOSTNAME = s.HOSTNAME
+					d.IP = s.IP
 				}
 			}
 		}
-		if org > d.LASTSEEN {
-			d.LASTSEEN = org
+		if ts > d.LASTSEEN_UNIX {
+			d.LASTSEEN_UNIX = ts
 		}
-
+		d.LASTSEEN_UNIX = d.LASTSEEN_UNIX / 1000
+		d.LASTSEEN = time.Unix(d.LASTSEEN_UNIX, 0).Format(time.RFC3339)
+		d.FIRSTSEEN = time.Unix(d.FIRSTSEEN_UNIX, 0).Format(time.RFC3339)
+		devices[i] = d // write back in the array
 	}
 
 	// sort devices by name
