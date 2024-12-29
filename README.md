@@ -6,11 +6,14 @@
 [![SemVer](https://img.shields.io/github/v/release/paepckehh/uniex)](https://github.com/paepckehh/uniex/releases/latest)
 <br>[![built with nix](https://builtwithnix.org/badge.svg)](https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=uniex)
 
-[paepcke.de/uniex](https://paepcke.de/uniex/)
+[paepcke.de/uniex](https://paepcke.de/uniex)
 
-# OPNBORG 
+# UNIEX
 
-- Selfhosted OPNSense WebGUI portal to configure, monitor and backup [opnsense.org](https://opnsense.org/) firewall appliance(s)
+- Exports UNIFI Controller Inventory Database (mongoDB) to [csv|json]
+- Adds missing attributes (latest used hostname, latest used ip, latest seen, ...) via parsing all stats snippets
+- Converts Timestamps (eg. unix nano time) into RFC3339 (parseable by excel, human readable) format
+- Fast, even for large corp enviroments (in-memory, parallel processing)
  
 # SCREENSHOT CLI
 
@@ -31,15 +34,12 @@ go install paepcke.de/uniex/cmd/uniex@main
 [https://github.com/paepckehh/uniex/releases](https://github.com/paepckehh/uniex/releases)
 
 
-# FEATURES
-
-
 # SUPPORTED OPTIONS 
 
 ```
-# Optional
-- UNIEX_MONGODB   - 
-- UNIEX_FORMAT    - 
+# Optional (env variables)
+- UNIEX_MONGODB   - mongodb uri, default: mongodb://127.0.0.1:27117
+- UNIEX_FORMAT    - export format, default: csv [csv|json]
 ```
 
 # DOCS
