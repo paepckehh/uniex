@@ -12,7 +12,7 @@
 
 - Selfhosted OPNSense WebGUI portal to configure, monitor and backup [opnsense.org](https://opnsense.org/) firewall appliance(s)
  
-# SCREENSHOT WEBUI
+# SCREENSHOT CLI
 
 ![UNIEX SAMPLE SCREENSHOT](https://github.com/paepckehh/uniex/blob/main/resources/screenshot01.png "SCREEN")
 
