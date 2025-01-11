@@ -11,7 +11,7 @@
 # UNIEX
 
 - Exports UNIFI Controller Inventory Database (mongoDB) to [csv|json]
-- Adds missing attributes (latest used hostname, latest used ip, latest seen, ...) via parsing all stats snippets
+- Adds missing attributes (latest used hostname, latest used ip, latest seen, ...) via parsing all device and stat records
 - Converts Timestamps (eg. unix nano time) into RFC3339 (parseable by excel, human readable) format
 - Fast, even for large corp inventory (in-memory, parallel processing)
  

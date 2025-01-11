@@ -9,7 +9,7 @@ import (
 )
 
 // global
-const SemVer = "v0.1.2"
+const SemVer = "v0.1.3"
 
 // Config
 type Config struct {
@@ -44,6 +44,13 @@ type Stat struct {
 	SWITCHMAC     string `bson:"sw_mac"`
 	SWITCHPORT    string `bson:"sw_port"`
 	LASTSEEN_UNIX int64  `bson:"time"`
+}
+
+// New Config
+func NewConfig() *Config {
+	c := &Config{}
+	c.setup()
+	return c
 }
 
 // Export Data
