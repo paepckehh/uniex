@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"paepcke.de/uniex"
@@ -23,8 +24,7 @@ func main() {
 	// perform Backup of all Appliances xml configuration
 	out, err := c.Export()
 	if err != nil {
-		fmt.Printf(_app+"[ERROR][EXIT] %s\n", err)
-		os.Exit(1)
+		log.Fatalf(_app+"[ERROR][EXIT] %v\n", err)
 	}
-	fmt.Printf(string(out))
+	fmt.Print(string(out))
 }
