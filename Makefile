@@ -16,5 +16,6 @@ deps:
 
 check: 
 	gofmt -w -s .
+	go vet .
 	staticcheck
 	make -C cmd/$(PROJECT) check

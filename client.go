@@ -69,7 +69,7 @@ func (c *Config) clientInventory(db *mongo.Client) ([]byte, error) {
 	// wait till all queries done
 	wg.Wait()
 
-	// parste all stats, add missing data into device records
+	// parse all stats, add missing data into device records
 	var ts int64
 	for i, d := range devices {
 		d.LASTSEEN_UNIX = d.LASTSEEN_UNIX * 1000 // stats stamps have higher time resolution
