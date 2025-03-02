@@ -9,7 +9,7 @@ import (
 )
 
 // global
-const SemVer = "v0.1.5"
+const SemVer = "v0.1.6"
 
 // Config
 type Config struct {
