@@ -3,6 +3,7 @@ package uniex
 import (
 	"context"
 	"errors"
+	"log"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -49,18 +50,17 @@ type Stat struct {
 // New Config
 func NewConfig() *Config {
 	c := &Config{}
-	c.setup()
-	return c
+	if err := c.setup(); err != nil {
+		log.Fatal(err)
+	}
+	return nil
 }
 
 // Export Data
 func (c *Config) Export() ([]byte, error) {
 
-	// init
-	var err error
-
 	// setup default and sanitize input
-	if c, err = c.setup(); err != nil {
+	if err := c.setup(); err != nil {
 		return nil, err
 	}
 

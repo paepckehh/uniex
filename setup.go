@@ -12,7 +12,7 @@ import (
 )
 
 // Setup defaults and sanitize config
-func (c *Config) setup() (*Config, error) {
+func (c *Config) setup() error {
 
 	// parse input
 	// validate input
@@ -24,10 +24,10 @@ func (c *Config) setup() (*Config, error) {
 	}
 	uri, err := url.Parse(c.MongoDB)
 	if err != nil {
-		return c, errors.New("invalid mongodb uri: " + c.MongoDB + " error: " + err.Error())
+		return errors.New("invalid mongodb uri: " + c.MongoDB + " error: " + err.Error())
 	}
 	if uri.Scheme != "mongodb" {
-		return c, errors.New("invalid mongodb uri scheme, need mongodb, got: " + uri.Scheme + " error: " + err.Error())
+		return errors.New("invalid mongodb uri scheme, need mongodb, got: " + uri.Scheme + " error: " + err.Error())
 	}
 
 	// validate output format
@@ -37,7 +37,7 @@ func (c *Config) setup() (*Config, error) {
 	case "":
 		c.Format = "csv"
 	default:
-		return c, errors.New("invalid export format, need: [csv|json], got: " + c.Format)
+		return errors.New("invalid export format, need: [csv|json], got: " + c.Format)
 	}
 
 	// validate search scope
@@ -46,7 +46,7 @@ func (c *Config) setup() (*Config, error) {
 	case "":
 		c.Scope = "client"
 	default:
-		return c, errors.New("invalid export scope, need: [client|infra], got: " + c.Scope)
+		return errors.New("invalid export scope, need: [client|infra], got: " + c.Scope)
 	}
 
 	// input parsing done
@@ -54,7 +54,7 @@ func (c *Config) setup() (*Config, error) {
 
 	// lookup target
 	if _, err := net.LookupIP(uri.Hostname()); err != nil {
-		return c, errors.New("unable to dns lookup mongodb hostname: " + uri.Hostname() + " error: " + err.Error())
+		return errors.New("unable to dns lookup mongodb hostname: " + uri.Hostname() + " error: " + err.Error())
 	}
 
 	// setup test db client connection
@@ -66,16 +66,20 @@ func (c *Config) setup() (*Config, error) {
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri.String()))
 	if err != nil {
-		return c, errors.New("mongodb connection client setup error:" + err.Error())
+		return errors.New("mongodb connection client setup error:" + err.Error())
 	}
-	defer client.Disconnect(ctx)
+	defer func() {
+		if err := client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}()
 
 	// test connection
 	err = client.Ping(ctx, nil)
 	if err != nil {
-		return c, errors.New("mongodb connection client ping error:" + err.Error())
+		return errors.New("mongodb connection client ping error:" + err.Error())
 	}
 
 	// success
-	return c, nil
+	return nil
 }
