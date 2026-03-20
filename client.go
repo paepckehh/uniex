@@ -23,11 +23,9 @@ func (c *Config) clientInventory(db *mongo.Client) ([]byte, error) {
 	)
 
 	// get all device records
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 
 		// clean exit
-		defer wg.Done()
 
 		// setup user db query context
 		c := db.Database("ace").Collection("user")
@@ -42,14 +40,12 @@ func (c *Config) clientInventory(db *mongo.Client) ([]byte, error) {
 		if err := q.All(context.TODO(), &devices); err != nil {
 			panic(err)
 		}
-	}()
+	})
 
 	// fetch all stats snipets
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 
 		// clean exit
-		defer wg.Done()
 
 		// setup user db query context
 		c := db.Database("ace_stat").Collection("stat_archive")
@@ -64,7 +60,7 @@ func (c *Config) clientInventory(db *mongo.Client) ([]byte, error) {
 		if err := q.All(context.TODO(), &stats); err != nil {
 			panic(err)
 		}
-	}()
+	})
 
 	// wait till all queries done
 	wg.Wait()
